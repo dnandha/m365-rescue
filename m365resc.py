@@ -130,6 +130,7 @@ class Flasher(object):
         uicr = self.data['res/ble/uicr_32k']
         if ram16:
             uicr = self.data['res/ble/uicr_16k']
+        uicr_addr = 0x10001000
 
         addr = uicr[0x14:0x14+4]
         if addr.hex() == "00c00300":
@@ -157,6 +158,8 @@ class Flasher(object):
             self.oocd.write_binary(bin_addr, self.binfile)
             Util.write_bin(self.tmpfile, boot)
             self.oocd.write_binary(boot_addr, self.tmpfile)
+            Util.write_bin(self.tmpfile, uicr)
+            self.oocd.write_binary(uicr_addr, self.tmpfile)
         else:
             bin_ = Util.read_bin(self.binfile)
             with open(self.outfile, "wb") as f:
