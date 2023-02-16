@@ -6,7 +6,7 @@ The project is based on [https://github.com/CamiAlfa/M365_DRV_STLINK](https://gi
 WARNING: Most of the stuff is untested, be prepared to brick your device and open an issue / PR here :). Thanks!
 
 ## Usage
-You can flash any firmware suited for the device in your possession by providing the path to the file as an CLI argument.
+You can flash any firmware suited for the device (that you own!) by providing the path to the file as an CLI argument.
 
 Use the `-s` or `--simulate` flag to generate an output file specified by `-o` or `--outfile`, instead of flashing with STLink.
 
