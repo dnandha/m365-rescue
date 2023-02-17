@@ -34,10 +34,10 @@ Connect STLink to the target device and start a openocd session. Then, in a new 
 ### Simulation
 Simulation allows generation of the final output file without STLink connection.
 
-#### Generate full 16k (Pro..) BLE rescue file
+#### Generate full 32k (Pro2..) BLE rescue file
 `python m365resc.py -s -o out_ble134.bin ble BLE134.bin`
 
-#### Generate full 32k (Pro2..) BLE rescue file
+#### Generate full 16k (Pro..) BLE rescue file
 `python m365resc.py -s -o out_ble090.bin ble --16k BLE090.bin`
 
 #### Generate full STM32 ESC rescue file

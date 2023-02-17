@@ -79,7 +79,7 @@ class Flasher(object):
         print("reading UUID...")
         if self.oocd:
             self.UUID = self.oocd.read_memory(0x1FFFF7E8, 3)
-        print("UUID: %08x %08x %08x" % (self.UUID[0], self.UUID[1], self.UUID[2]))
+        print("UUID (chip): %08x %08x %08x" % (self.UUID[0], self.UUID[1], self.UUID[2]))
 
     def prep_data(self, serial="00000/0000000", km=0):
         print("preparing sooter data...")
@@ -180,7 +180,7 @@ class Flasher(object):
         print("verifying...")
         if self.oocd:
             UUID2 = self.oocd.read_memory(0x0800F9B4, 3)
-            print("%08x %08x %08x\n" % (UUID2[0], UUID2[1], UUID2[2]))
+            print("UUID (flash): %08x %08x %08x" % (UUID2[0], UUID2[1], UUID2[2]))
             self.oocd.send("reset")
             if self.UUID[0] == UUID2[0] and self.UUID[1] == UUID2[1] and self.UUID[2] == UUID2[2]:
                 print("verify UUID success")
@@ -232,9 +232,8 @@ if __name__ == "__main__":
         flasher.prep_data(args.sn, args.km)
         flasher.flash_esc(gd32=args.gd32)
         flasher.verify()
-        flasher.reset()
     elif args.sub == "ble":
         flasher.mass_erase()
         flasher.flash_ble(ram16=args.ram16)
-        flasher.reset()
+    flasher.reset()
     flasher.cleanup()
