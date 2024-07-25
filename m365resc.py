@@ -20,6 +20,7 @@ import openocd
 from os import path, remove
 from util import Util
 from struct import pack, unpack
+import re
 
 
 class Flasher(object):
@@ -86,8 +87,9 @@ class Flasher(object):
         print("preparing sooter data...")
         sn = serial.encode()
         self.scooter_data = None
-        if len(sn) == 15:
-            print("opt: alt data section")
+        pattern_4pro = r'[0-9]{5}/[A-Z0-9]{14}'
+        if re.match(pattern_4pro, serial):
+            print("opt: 4 pro data section")
             self.scooter_data = self.data['res/esc/data_4pro'].copy()
             self.scooter_data[0xa8:0xa8+len(sn)] = sn
         else:
