@@ -3,6 +3,8 @@ Python based helper to restore m365 devices. Works on Linux!
 
 The project is based on [https://github.com/CamiAlfa/M365_DRV_STLINK](https://github.com/CamiAlfa/M365_DRV_STLINK).
 
+No firmware files are provided with this tool. You have posess the binary you want to flash.
+
 WARNING: Most of the stuff is untested, be prepared to brick your device and open an issue / PR here :). Thanks!
 
 ## Usage
@@ -31,6 +33,9 @@ Connect STLink to the target device and start a openocd session. Then, in a new 
 #### Restore GD32 ESC
 `python m365resc.py esc --gd32 --sn "..." --km 123 DRV247.bin`
 
+#### Restore 4Pro ESC
+`python m365resc.py esc --nb --sn "..." --km 123 DRV022.bin`
+
 ### Simulation
 Simulation allows generation of the final output file without STLink connection.
 
@@ -45,6 +50,9 @@ Simulation allows generation of the final output file without STLink connection.
 
 #### Generate full GD32 ESC rescue file
 `python m365resc.py -s -o out_drv247_gd32.bin esc --gd32 --sn "..." --km 123 DRV247.bin`
+
+#### Generate full 4Pro ESC rescue file
+`python m365resc.py -s -o out_drv022.bin esc --nb --sn "..." --km 123 DRV022.bin`
 
 ## Disclaimer
 I am in no way affiliated with any hardware vendor. All information / files provided in this repo are publically available. The purpose of this project is to allow owners to restore device functionality in case of a software malfunction.

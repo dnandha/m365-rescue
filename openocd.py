@@ -100,6 +100,9 @@ class OpenOcd:
   command='program '+path+'\\'+hex_file+' verify'
   self.send(command.replace('\\','/'))
   
+ def write_byte(self, address, data):
+     self.send("mwb 0x%x 0x%x" % (address, data))
+
  def write_memory(self, address, data, word_length=32):
   array = ' '.join(['%d 0x%x' % (i, v) for (i, v) in enumerate(data)])
 

@@ -19,6 +19,7 @@ import argparse
 import openocd
 from os import path, remove
 from util import Util
+from struct import pack, unpack
 
 
 class Flasher(object):
@@ -81,33 +82,45 @@ class Flasher(object):
             self.UUID = self.oocd.read_memory(0x1FFFF7E8, 3)
         print("UUID (chip): %08x %08x %08x" % (self.UUID[0], self.UUID[1], self.UUID[2]))
 
-    def prep_data(self, serial="00000/0000000", km=0):
+    def prep_data(self, serial="00000/0000000", nb=False, km=0):
         print("preparing sooter data...")
         self.scooter_data = self.data['res/esc/data'].copy()
         sn = serial.encode()
-        self.scooter_data[0x20:0x20+len(sn)] = sn
+        if nb:
+            self.scooter_data[0xa8:0xa8+len(sn)] = sn
+        else:
+            self.scooter_data[0x20:0x20+len(sn)] = sn
         self.scooter_data[0x1b4:0x1b4+4] = Util.word2bytes(self.UUID[0])
         self.scooter_data[0x1b8:0x1b8+4] = Util.word2bytes(self.UUID[1])
         self.scooter_data[0x1bc:0x1bc+4] = Util.word2bytes(self.UUID[2])
         self.scooter_data[0x52:0x52+4] = Util.word2bytes(km * 1000)
 
-    def flash_esc(self, gd32=False):
+    def flash_esc(self, gd32=False, at32=False, nb=False, remove_rdp=False):
         print("flashing...")
         boot = self.data['res/esc/bootldr_stm32']
         if gd32:
             print("opt: gd32")
             boot = self.data['res/esc/bootldr_gd32']
+        elif nb and at32:
+            print("opt: nb at32")
+            boot = self.data['res/esc/bootldr_at32_nb']
+        elif nb:
+            print("opt: nb")
+            boot = self.data['res/esc/bootldr_stm32_nb']
         data = self.scooter_data
         bin_offs = 0x1000
         data_offs = 0xf800
+        if nb:
+            data_offs = 0x1c000
+        bin_ = Util.read_bin(self.binfile)
         if self.oocd:
             Util.write_bin(self.tmpfile, boot)
             self.oocd.write_binary(0x08000000, self.tmpfile)
-            self.oocd.write_binary(0x08000000 + bin_offs, self.binfile)
+            Util.write_bin(self.tmpfile, bin_)
+            self.oocd.write_binary(0x08000000 + bin_offs, self.tmpfile)
             Util.write_bin(self.tmpfile, data)
             self.oocd.write_binary(0x08000000 + data_offs, self.tmpfile)
         else:
-            bin_ = Util.read_bin(self.binfile)
             with open(self.outfile, "wb") as f:
                 for _ in range(0, data_offs + len(data)):
                     f.write(bytes.fromhex("FF"))
@@ -117,8 +130,13 @@ class Flasher(object):
                 f.write(bin_)
                 f.seek(data_offs)
                 f.write(data)
+        #if remove_rdp:
+        #    self.oocd.write_byte(0x1FFFF800, 0xA5)
 
-    def flash_ble(self, ram16=False):
+    def flash_ble(self, nb=False, ram16=False):
+        if nb:
+            raise Exception("NB BLE not implemented")
+
         print("flashing...")
         bin_addr = 0x0
         bin_upd_addr = 0x0
@@ -152,16 +170,17 @@ class Flasher(object):
         else:
             raise Exception("UICR messed up")
 
+        bin_ = Util.read_bin(self.binfile)
         if self.oocd:
             Util.write_bin(self.tmpfile, soft)
             self.oocd.write_binary(0x0, self.tmpfile)
-            self.oocd.write_binary(bin_addr, self.binfile)
+            Util.write_bin(self.tmpfile, bin_)
+            self.oocd.write_binary(bin_addr, self.tmpfile)
             Util.write_bin(self.tmpfile, boot)
             self.oocd.write_binary(boot_addr, self.tmpfile)
             Util.write_bin(self.tmpfile, uicr)
             self.oocd.write_binary(uicr_addr, self.tmpfile)
         else:
-            bin_ = Util.read_bin(self.binfile)
             with open(self.outfile, "wb") as f:
                 for _ in range(0, boot_addr+len(boot)):
                     f.write(bytes.fromhex("FF"))
@@ -204,10 +223,15 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--outfile", help="path to output file", default="out.bin")
     parser.add_argument("-p", "--packfile", help="path to resource pack file", default="res.pack")
 
+    escparser.add_argument("--nb", action="store_true", help="NB instead of MI bootloaders", default=False)
     bleparser.add_argument("--16k", dest="ram16", action="store_true", help="16k RAM instead of 32k RAM (m365/pro/clones)", default=False)
     escparser.add_argument("--gd32", action="store_true", help="GD32 instead of STM32 chip", default=False)
+    escparser.add_argument("--at32", action="store_true", help="AT32 instead of STM32 chip", default=False)
     escparser.add_argument("--sn", help="serial number to set when flashing controller", default="13678/00110029")
     escparser.add_argument("--km", type=int, help="km to set when flashing controller", default="0")
+    escparser.add_argument("--uuid", help="", default="")
+    escparser.add_argument("--nordp", action="store_true", help="Remove readout protection", default=False)
+    escparser.add_argument("--norst", action="store_true", help="Don't reset after flash", default=False)
 
     args = parser.parse_args()
     print(args)
@@ -228,12 +252,21 @@ if __name__ == "__main__":
             flasher.unlock_stm32()
         else:
             flasher.unlock_gd32()
-        flasher.read_uuid()
-        flasher.prep_data(args.sn, args.km)
-        flasher.flash_esc(gd32=args.gd32)
-        flasher.verify()
+        if not args.uuid:
+            flasher.read_uuid()
+        else:
+            uuid = bytes.fromhex(args.uuid)
+            flasher.UUID[0] = unpack("<L", uuid[:4])[0]
+            flasher.UUID[1] = unpack("<L", uuid[4:8])[0]
+            flasher.UUID[2] = unpack("<L", uuid[8:])[0]
+
+        flasher.prep_data(serial=args.sn, nb=args.nb, km=args.km)
+        flasher.flash_esc(nb=args.nb, gd32=args.gd32, at32=args.at32, remove_rdp=args.nordp)
+        if not args.norst:
+            flasher.verify()
     elif args.sub == "ble":
         flasher.mass_erase()
-        flasher.flash_ble(ram16=args.ram16)
-    flasher.reset()
+        flasher.flash_ble(nb=args.nb, ram16=args.ram16)
+    if not args.norst:
+        flasher.reset()
     flasher.cleanup()
