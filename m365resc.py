@@ -82,13 +82,16 @@ class Flasher(object):
             self.UUID = self.oocd.read_memory(0x1FFFF7E8, 3)
         print("UUID (chip): %08x %08x %08x" % (self.UUID[0], self.UUID[1], self.UUID[2]))
 
-    def prep_data(self, serial="00000/0000000", nb=False, km=0):
+    def prep_data(self, serial="00000/0000000", km=0):
         print("preparing sooter data...")
-        self.scooter_data = self.data['res/esc/data'].copy()
         sn = serial.encode()
-        if nb:
+        self.scooter_data = None
+        if len(sn) == 15:
+            print("opt: alt data section")
+            self.scooter_data = self.data['res/esc/data_4pro'].copy()
             self.scooter_data[0xa8:0xa8+len(sn)] = sn
         else:
+            self.scooter_data = self.data['res/esc/data'].copy()
             self.scooter_data[0x20:0x20+len(sn)] = sn
         self.scooter_data[0x1b4:0x1b4+4] = Util.word2bytes(self.UUID[0])
         self.scooter_data[0x1b8:0x1b8+4] = Util.word2bytes(self.UUID[1])
@@ -260,7 +263,7 @@ if __name__ == "__main__":
             flasher.UUID[1] = unpack("<L", uuid[4:8])[0]
             flasher.UUID[2] = unpack("<L", uuid[8:])[0]
 
-        flasher.prep_data(serial=args.sn, nb=args.nb, km=args.km)
+        flasher.prep_data(serial=args.sn, km=args.km)
         flasher.flash_esc(nb=args.nb, gd32=args.gd32, at32=args.at32, remove_rdp=args.nordp)
         if not args.norst:
             flasher.verify()
