@@ -122,8 +122,12 @@ class OpenOcd:
 
   raw = self.send('return $%s' % self._tcl_variable).split(' ')
 
+  base = 10
+  if raw[-1].startswith("0x"):
+    base = 16
+
   order = [int(raw[2 * i]) for i in range(len(raw) // 2)]
-  values = [int(raw[2 * i + 1]) for i in range(len(raw) // 2)]
+  values = [int(raw[2 * i + 1], base) for i in range(len(raw) // 2)]
 
   # Sort the array because it may not be sorted by the memory address.
   result = [0] * len(values)
