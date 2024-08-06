@@ -200,7 +200,7 @@ class Flasher(object):
                 f.seek(boot_addr)
                 f.write(boot)
 
-    def verify(self, nb):
+    def verify(self, nb=False):
         print("verifying...")
         if self.oocd:
             uuid_offs = 0x08000000 + 0xf800 + 0x1b4
@@ -273,7 +273,7 @@ if __name__ == "__main__":
         flasher.prep_data(serial=args.sn, km=args.km)
         flasher.flash_esc(nb=args.nb, gd32=args.gd32, at32=args.at32, remove_rdp=args.nordp)
         if not args.norst:
-            flasher.verify()
+            flasher.verify(nb=args.nb)
     elif args.sub == "ble":
         flasher.mass_erase()
         flasher.flash_ble(nb=args.nb, ram16=args.ram16)
