@@ -200,10 +200,15 @@ class Flasher(object):
                 f.seek(boot_addr)
                 f.write(boot)
 
-    def verify(self):
+    def verify(self, nb):
         print("verifying...")
         if self.oocd:
-            UUID2 = self.oocd.read_memory(0x0800F9B4, 3)
+            uuid_offs = 0x08000000 + 0xf800 + 0x1b4
+            if nb:
+                uuid_offs = 0x08000000 + 0x1c000 + 0x1b4
+
+            UUID2 = self.oocd.read_memory(uuid_offs, 3)
+
             print("UUID (flash): %08x %08x %08x" % (UUID2[0], UUID2[1], UUID2[2]))
             self.oocd.send("reset")
             if self.UUID[0] == UUID2[0] and self.UUID[1] == UUID2[1] and self.UUID[2] == UUID2[2]:
