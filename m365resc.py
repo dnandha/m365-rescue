@@ -24,7 +24,7 @@ import re
 
 
 class Flasher(object):
-    def __init__(self, oocd, packfile, binfile, outfile, tmpfile=".tmp"):
+    def __init__(self, oocd, packfile, binfile, outfile, tmpfile="data.tmp"):
         self.oocd = oocd
         self.UUID = [0x12345678, 0x9ABCDEF0, 0x12345678]
         if not path.isfile(packfile):
@@ -210,6 +210,7 @@ class Flasher(object):
             UUID2 = self.oocd.read_memory(uuid_offs, 3)
             if not UUID2:
                 print("verify UUID failed: power cycle controller and try again")
+                return
 
 
             print("UUID (flash): %08x %08x %08x" % (UUID2[0], UUID2[1], UUID2[2]))
@@ -217,7 +218,7 @@ class Flasher(object):
             if self.UUID[0] == UUID2[0] and self.UUID[1] == UUID2[1] and self.UUID[2] == UUID2[2]:
                 print("verify UUID success")
             else:
-                print("verify UUID failed!!")
+                print("verify UUID failed: power cycle controller and try again")
 
     def cleanup(self):
         print("cleaning up...")
