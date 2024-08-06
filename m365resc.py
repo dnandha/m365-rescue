@@ -208,6 +208,9 @@ class Flasher(object):
                 uuid_offs = 0x08000000 + 0x1c000 + 0x1b4
 
             UUID2 = self.oocd.read_memory(uuid_offs, 3)
+            if not UUID2:
+                print("verify UUID failed: power cycle controller and try again")
+
 
             print("UUID (flash): %08x %08x %08x" % (UUID2[0], UUID2[1], UUID2[2]))
             self.oocd.send("reset")

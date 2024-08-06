@@ -114,27 +114,14 @@ class OpenOcd:
    word_length, address, len(data)))
 
  def read_memory(self, address, count, word_length=32):
-  # Clear the array before using it.
-  self.send('array unset %s' % self._tcl_variable)
+  raw = self.send('read_memory %d 0x%x %d' % (
+   address, word_length, count))
 
-  self.send('mem2array %s %d 0x%x %d' % (self._tcl_variable,
-   word_length, address, count))
+  bytes_ = []
+  if raw.startswith("0x"):
+      bytes_ = [int(x, 0) for x in raw.split(' ')]
 
-  raw = self.send('return $%s' % self._tcl_variable).split(' ')
-
-  base = 10
-  if raw[-1].startswith("0x"):
-    base = 16
-
-  order = [int(raw[2 * i]) for i in range(len(raw) // 2)]
-  values = [int(raw[2 * i + 1], base) for i in range(len(raw) // 2)]
-
-  # Sort the array because it may not be sorted by the memory address.
-  result = [0] * len(values)
-  for (i, pos) in enumerate(order):
-   result[pos] = values[i]
-
-  return result
+  return bytes_
 
  def read_register(self, register):
   if issubclass(type(register), int):
