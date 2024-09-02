@@ -244,8 +244,12 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--outfile", help="path to output file", default="out.bin")
     parser.add_argument("-p", "--packfile", help="path to resource pack file", default="res.pack")
 
-    escparser.add_argument("--nb", action="store_true", help="NB instead of MI bootloaders", default=False)
+    
     bleparser.add_argument("--16k", dest="ram16", action="store_true", help="16k RAM instead of 32k RAM (m365/pro/clones)", default=False)
+    bleparser.add_argument("--nb", action="store_true", help="NB instead of MI bootloaders", default=False)
+    bleparser.add_argument("--norst", action="store_true", help="Don't reset after flash", default=False)
+    
+    escparser.add_argument("--nb", action="store_true", help="NB instead of MI bootloaders", default=False)
     escparser.add_argument("--gd32", action="store_true", help="GD32 instead of STM32 chip", default=False)
     escparser.add_argument("--at32", action="store_true", help="AT32 instead of STM32 chip", default=False)
     escparser.add_argument("--sn", help="serial number to set when flashing controller", default="13678/00110029")
